@@ -1,6 +1,6 @@
 #Imports
 import serial
-from time import sleep
+import time
 import sys
 import pynmea2
 import string
@@ -16,8 +16,8 @@ import shutil
 possible_fire = False
 
 #Range with which to test colors
-lowcolor = (200,20,0)
-highcolor = (255,200,40)
+lowcolor =  np.array([140,50,0])
+highcolor = np.array([255,170,128])
 
 #Lets the program know when it should stop
 continue_loop = True
@@ -71,26 +71,29 @@ def get_lng(gps_data):
 #Takes picture/turns LEDs on and saves pic as temp
 def take_picture():
     GPIO.output(led, GPIO.HIGH)
-    camera.capture("/home/pi/Documents/flight_data/temp_img.jpg")
+    camera.capture("/home/pi/Documents/Forest-Fire-Detection-Drone/flight_data/pictures/temp_img.jpg")
     GPIO.output(led, GPIO.LOW)
     
 
 #Tests the image to see if there is color in the target range
 def test_img(img, lowcolor, highcolor):
+    
+    rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    median = cv2.medianBlur(rgb,7)
+    thresh = cv2.inRange(median, lowcolor, highcolor)
 
-    thresh = cv2.inRange(img, lowcolor, highcolor)
-
-    count = np.sim(np.nonzero(thresh))
-    print('count =', count)
+    count = np.sum(np.nonzero(thresh))
     if count == 0:
+        print('Not Red')
         return False
     else:
+        print('There is Red')
         return True
 
 #Function to automatically move and name the images if they are possible fires
 def move_img(n):
-    original = r'/home/pi/Documents/flight_data/pictures/img.jpg'
-    target = r'/home/pi/Documents/flight_data/pictures/possible%s.jpg' % n
+    original = r'/home/pi/Documents/Forest-Fire-Detection-Drone/flight_data/pictures/temp_img.jpg'
+    target = r'/home/pi/Documents/Forest-Fire-Detection-Drone/flight_data/pictures/possible%s.jpg' % n
     shutil.move(original, target)
 
 
@@ -125,7 +128,7 @@ num_possible = 0
 while continue_loop:
     
     take_picture()
-    img = cv2.imread('/home/pi/Documents/flight_data/pictures/img.jpg')
+    img = cv2.imread('/home/pi/Documents/Forest-Fire-Detection-Drone/flight_data/pictures/temp_img.jpg')
     
     #loops, calling a new gps data array untill it gets good data, then stores it in the lat and lng variables
     while True:
