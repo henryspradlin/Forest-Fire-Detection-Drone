@@ -22,9 +22,6 @@ highcolor = np.array([255,170,128])
 #Lets the program know when it should stop
 continue_loop = True
 
-#Temp variable to store current coords of lat and lng, should be list
-gps_coords = [-1, -1]
-
 #Tuple to store list of coords on likley pictures
 lat_gps_coords = []
 lng_gps_coords = []
@@ -105,13 +102,9 @@ while True:
     if (lng != -1):
         break
     
-gps_coords = [lat, lng]
-print('Latitude:', gps_coords[0], 'Longitude:', gps_coords[1])
 
+print('Latitude:', lat, 'Longitude:', lng)
 
-#2d data in python is annoying
-#create 2 lists
-#create csv at end of flight loop
 
 
 
@@ -136,7 +129,8 @@ while continue_loop:
         lat = get_lat(newdata)
         lng = get_lng(newdata)
         if (lng != -1):
-            break    
+            break
+        
     print('Latitude:', lat, 'Longitude:', lng)
     
     
@@ -149,17 +143,17 @@ while continue_loop:
          
     
     time.sleep(5)
-    continue_loop = False
+    if num_possible >= 2:
+        continue_loop = False
+        
     
 #csv code
-# import csv
-# 
-# coord_count = 0
-# 
-# with open('colours.csv', 'w', newline='') as csvfile:
-#     fieldnames = ['number', 'lat', 'lng']
-#     thewriter = csv.DictWriter(csvfile, fieldnames=fieldnames)
-#     thewriter.writeheader()
-#     for colour in colours:
-#         colour_count += 1
-#         thewriter.writerow({'number':colour_count, 'colour':colour})
+
+with open('data.csv', 'w', newline='') as csvfile:
+    fieldnames = ['number', 'lat', 'lng']
+    thewriter = csv.DictWriter(csvfile, fieldnames=fieldnames)
+    thewriter.writeheader()
+    coord_count = 0
+    for x in range(num_possible):
+        thewriter.writerow({'number':coord_count, 'lat':lat_gps_coords[coord_count], 'lng':lng_gps_coords[coord_count]})
+        coord_count += 1
