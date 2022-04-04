@@ -18,14 +18,16 @@ rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 median = cv2.medianBlur(rgb,7)
 
 lowcolor =  np.array([140,50,0])
-highcolor = np.array([255,170,128])
+highcolor = np.array([255,170,100])
 
 mask = cv2.inRange(median, lowcolor, highcolor)
 
+kernel = np.ones((3,3), np.uint8)
+erode = cv2.erode(mask, kernel, iterations=1)
+
 cv2.imshow('image', img)
-cv2.imshow('converted', rgb)
-cv2.imshow('median', median)
 cv2.imshow('mask', mask)
+cv2.imshow('erode', erode)
 
 time.sleep(5)
 cv2.waitKey(0)

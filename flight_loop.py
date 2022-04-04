@@ -17,7 +17,8 @@ possible_fire = False
 
 #Range with which to test colors
 lowcolor =  np.array([140,50,0])
-highcolor = np.array([255,170,128])
+highcolor = np.array([255,170,100])
+erode_kernel = np.ones((7,7), np.uint8)
 
 #Lets the program know when it should stop
 continue_loop = True
@@ -73,11 +74,10 @@ def take_picture():
     
 
 #Tests the image to see if there is color in the target range
-def test_img(img, lowcolor, highcolor):
-    
+def test_img(img, lowcolor, highcolor, erode_kernel):  
     rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    median = cv2.medianBlur(rgb,7)
-    thresh = cv2.inRange(median, lowcolor, highcolor)
+    thresh = cv2.inRange(rgb, lowcolor, highcolor)
+    eroded_img = cv2.erode(thresh, erode_kernel, iterations=1)
 
     count = np.sum(np.nonzero(thresh))
     if count == 0:
@@ -135,25 +135,24 @@ while continue_loop:
     
     
     #Tests and saves img and coords if possible fire
-    if test_img(img, lowcolor, highcolor):
+    if test_img(img, lowcolor, highcolor, erode_kernel):
         lat_gps_coords.append(lat)
         lng_gps_coords.append(lng)
         move_img(num_possible)
         num_possible += 1
          
-    
+    #Ends loop when 2 possible images have been taken
     time.sleep(5)
     if num_possible >= 2:
         continue_loop = False
         
-    
-#csv code
 
-with open('data.csv', 'w', newline='') as csvfile:
-    fieldnames = ['number', 'lat', 'lng']
+#csv code
+with open('/home/pi/Documents/Forest-Fire-Detection-Drone/flight_data/flight_data.csv', 'w', newline='') as csvfile:
+    fieldnames = ['index', 'lat', 'lng']
     thewriter = csv.DictWriter(csvfile, fieldnames=fieldnames)
     thewriter.writeheader()
     coord_count = 0
     for x in range(num_possible):
-        thewriter.writerow({'number':coord_count, 'lat':lat_gps_coords[coord_count], 'lng':lng_gps_coords[coord_count]})
+        thewriter.writerow({'index':coord_count, 'lat':lat_gps_coords[coord_count], 'lng':lng_gps_coords[coord_count]})
         coord_count += 1
