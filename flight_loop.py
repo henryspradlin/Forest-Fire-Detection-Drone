@@ -1,3 +1,5 @@
+#! /usr/bin/python3
+
 #Imports
 import serial
 import time
@@ -12,21 +14,6 @@ import cv2
 import numpy as np
 import shutil
 
-#Returns a boolean about possible fire detected
-possible_fire = False
-
-#Range with which to test colors
-lowcolor =  np.array([140,50,0])
-highcolor = np.array([255,170,100])
-erode_kernel = np.ones((7,7), np.uint8)
-
-#Lets the program know when it should stop
-continue_loop = True
-
-#Tuple to store list of coords on likley pictures
-lat_gps_coords = []
-lng_gps_coords = []
-
 #Creating ser variable
 ser = serial.Serial("/dev/ttyAMA0", baudrate=9600)
 
@@ -38,6 +25,23 @@ led = 16
 GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BOARD)
 GPIO.setup(led, GPIO.OUT, initial=GPIO.LOW)
+
+#Lets the program know when it should stop
+continue_loop = True
+
+#Returns a boolean about possible fire detected
+possible_fire = False
+
+#Tuple to store list of coords on likley pictures
+lat_gps_coords = []
+lng_gps_coords = []
+
+#Range with which to test colors
+lowcolor =  np.array([140,50,0])
+highcolor = np.array([255,170,100])
+
+#Erosion matrix size
+erode_kernel = np.ones((7,7), np.uint8)
 
 
 #Recieves the raw gps data and returns the latitude
@@ -87,24 +91,19 @@ def test_img(img, lowcolor, highcolor, erode_kernel):
         print('There is Red')
         return True
 
+
 #Function to automatically move and name the images if they are possible fires
 def move_img(n):
     original = r'/home/pi/Documents/Forest-Fire-Detection-Drone/flight_data/pictures/temp_img.jpg'
     target = r'/home/pi/Documents/Forest-Fire-Detection-Drone/flight_data/pictures/possible%s.jpg' % n
     shutil.move(original, target)
 
+#Start of the program
 
-#Make into another function that returns a list or dict or something with lat and lng
-while True:
-    newdata = ser.readline()
-    lng = get_lng(newdata)
-    lat = get_lat(newdata)
-    if (lng != -1):
-        break
-    
-
-print('Latitude:', lat, 'Longitude:', lng)
-
+#Turns LED on as indicator light untill the loop starts
+GPIO.output(led, GPIO.HIGH)
+time.sleep(5)
+GPIO.output(led, GPIO.LOW)
 
 
 
