@@ -1,5 +1,9 @@
 #! /usr/bin/python3
 
+#Things Left To Do
+#Connect with remote switch
+#Run on boot
+
 #Imports
 import serial
 import time
@@ -21,10 +25,12 @@ ser = serial.Serial("/dev/ttyAMA0", baudrate=9600)
 camera = PiCamera()
 
 #Set up LED
-led = 16
+camera_led = 16
+status_led = 18
 GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BOARD)
-GPIO.setup(led, GPIO.OUT, initial=GPIO.LOW)
+GPIO.setup(camera_led, GPIO.OUT, initial=GPIO.LOW)
+GPIO.setup(status_led, GPIO.OUT, initial=GPIO.LOW)
 
 #Lets the program know when it should stop
 continue_loop = True
@@ -42,6 +48,9 @@ highcolor = np.array([255,170,100])
 
 #Erosion matrix size
 erode_kernel = np.ones((7,7), np.uint8)
+
+#Time in between pictures
+loop_time = 5
 
 
 #Recieves the raw gps data and returns the latitude
@@ -71,11 +80,11 @@ def get_lng(gps_data):
 
 
 #Takes picture/turns LEDs on and saves pic as temp
-def take_picture():
-    GPIO.output(led, GPIO.HIGH)
+def take_picture(camera_led):
+    GPIO.output(camera_led, GPIO.LOW)
     camera.capture("/home/pi/Documents/Forest-Fire-Detection-Drone/flight_data/pictures/temp_img.jpg")
-    GPIO.output(led, GPIO.LOW)
-    
+    GPIO.output(camera_led, GPIO.HIGH)
+
 
 #Tests the image to see if there is color in the target range
 def test_img(img, lowcolor, highcolor, erode_kernel):  
@@ -95,20 +104,22 @@ def test_img(img, lowcolor, highcolor, erode_kernel):
 #Function to automatically move and name the images if they are possible fires
 def move_img(n):
     original = r'/home/pi/Documents/Forest-Fire-Detection-Drone/flight_data/pictures/temp_img.jpg'
-    target = r'/home/pi/Documents/Forest-Fire-Detection-Drone/flight_data/pictures/possible%s.jpg' % n
+    target = r'/media/pi/ESD-USB/flight_data/pictures/possible%s.jpg' % n
     shutil.move(original, target)
 
 #Start of the program
 
 #Turns LED on as indicator light untill the loop starts
-GPIO.output(led, GPIO.HIGH)
+GPIO.output(status_led, GPIO.HIGH)
 time.sleep(5)
-GPIO.output(led, GPIO.LOW)
+GPIO.output(camera_led, GPIO.HIGH)
+
 
 
 
 #Counts how many possible fire images have been taken
 num_possible = 0
+looped = 0
 
 #Flight Loop
 #1) Turn on LED
@@ -118,8 +129,8 @@ num_possible = 0
 #4.5)   if yes: Record GPS Coords
 #5) Wait
 while continue_loop:
-    
-    take_picture()
+    looped += 1
+    take_picture(camera_led)
     img = cv2.imread('/home/pi/Documents/Forest-Fire-Detection-Drone/flight_data/pictures/temp_img.jpg')
     
     #loops, calling a new gps data array untill it gets good data, then stores it in the lat and lng variables
@@ -141,13 +152,17 @@ while continue_loop:
         num_possible += 1
          
     #Ends loop when 2 possible images have been taken
-    time.sleep(5)
-    if num_possible >= 2:
+    time.sleep(loop_time)
+    if looped >= 10:
         continue_loop = False
+    else:
+        continue_loop = True
         
 
+GPIO.setup(status_led, GPIO.OUT, initial=GPIO.LOW)
+
 #csv code
-with open('/home/pi/Documents/Forest-Fire-Detection-Drone/flight_data/flight_data.csv', 'w', newline='') as csvfile:
+with open('/media/pi/ESD-USB/flight_data/flight_data.csv', 'w', newline='') as csvfile:
     fieldnames = ['index', 'lat', 'lng']
     thewriter = csv.DictWriter(csvfile, fieldnames=fieldnames)
     thewriter.writeheader()
@@ -155,3 +170,6 @@ with open('/home/pi/Documents/Forest-Fire-Detection-Drone/flight_data/flight_dat
     for x in range(num_possible):
         thewriter.writerow({'index':coord_count, 'lat':lat_gps_coords[coord_count], 'lng':lng_gps_coords[coord_count]})
         coord_count += 1
+        
+GPIO.output(status_led, GPIO.LOW)
+GPIO.output(camera_led, GPIO.LOW)

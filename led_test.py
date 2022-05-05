@@ -5,7 +5,7 @@ led = 16
 
 GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BOARD)
-GPIO.setup(led, GPIO.OUT, initial=GPIO.LOW)
+GPIO.setup(led, GPIO.OUT, initial=GPIO.HIGH)
 
 while True:
     print("on")
