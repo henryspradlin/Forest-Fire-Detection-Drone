@@ -169,6 +169,7 @@ with open('/media/pi/ESD-USB/flight_data/flight_data.csv', 'w', newline='') as c
     coord_count = 0
     for x in range(num_possible):
         thewriter.writerow({'index':coord_count, 'lat':lat_gps_coords[coord_count], 'lng':lng_gps_coords[coord_count]})
+        print(lat_gps_coords[coord_count])
         coord_count += 1
         
 GPIO.output(status_led, GPIO.LOW)
